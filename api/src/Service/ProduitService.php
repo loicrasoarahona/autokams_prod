@@ -35,12 +35,109 @@ class ProduitService
         $this->approvisionnementDetailService = $approvisionnementDetailService;
     }
 
-    public function getClassementProduitVente()
+    public function getStatistiqueVente($produitId, $intervale, $dateDebut, $dateFin)
     {
-        $sql = "select produit.*,sum(quantite * vente_detail.prix) as total_ventes from vente_detail join produit on produit_id=produit.id group by produit_id order by total_ventes desc limit 30";
-        $results = $this->em->getConnection()->fetchAllAssociative($sql);
+        // dd($intervale);
+        if ($intervale == "jour") {
+            $sql = "select
+            sum(quantite) as nbVentes,
+            date(daty) as date
+        from
+            vente_detail
+            join vente on vente.id = vente_id
+            join produit on produit.id = produit_id
+        where
+            produit_id = " . $produitId .
+                " and vente.daty >= '" . $dateDebut .
+                "'and vente.daty <= '" . $dateFin .
+                "'group by
+            date";
 
-        dd($results);
+            $results = $this->em->getConnection()->fetchAllAssociative($sql);
+            return $results;
+        } else if ($intervale == "mois") {
+            $sql = "select
+            sum(quantite) as nbVentes,
+            concat(year(daty),'-',month(daty)) as date
+        from
+            vente_detail
+            join vente on vente.id = vente_id
+            join produit on produit.id = produit_id
+        where
+            produit_id = " . $produitId .
+                " and vente.daty >= '" . $dateDebut .
+                "'and vente.daty < '" . $dateFin .
+                "'group by
+            date";
+            $results = $this->em->getConnection()->fetchAllAssociative($sql);
+            return $results;
+        } else if ($intervale == "année") {
+            $sql = "select
+            sum(quantite) as nbVentes,
+            year(daty) as date
+        from
+            vente_detail
+            join vente on vente.id = vente_id
+            join produit on produit.id = produit_id
+        where
+            produit_id = " . $produitId .
+                " and vente.daty >= '" . $dateDebut .
+                "'and vente.daty < '" . $dateFin .
+                "'group by
+            date";
+            $results = $this->em->getConnection()->fetchAllAssociative($sql);
+            return $results;
+        } else if ($intervale == "semaine") {
+            $sql = "select
+            sum(quantite) as nbVentes,
+            concat(week(daty),'-',year(daty)) as date
+        from
+            vente_detail
+            join vente on vente.id = vente_id
+            join produit on produit.id = produit_id
+        where
+            produit_id = " . $produitId .
+                " and vente.daty >= '" . $dateDebut .
+                "'and vente.daty < '" . $dateFin .
+                "'group by
+            date order by vente.daty";
+            $results = $this->em->getConnection()->fetchAllAssociative($sql);
+            return $results;
+        } else if ($intervale == "cette semaine") {
+            $sql = "select
+            sum(quantite) as nbVentes,
+            date(daty) as date
+        from
+            vente_detail
+            join vente on vente.id = vente_id
+            join produit on produit.id = produit_id
+        where
+            produit_id = " . $produitId .
+                " and vente.daty >= '" . $dateDebut .
+                "'and vente.daty <= '" . $dateFin .
+                "'group by
+            date";
+            $results = $this->em->getConnection()->fetchAllAssociative($sql);
+            return $results;
+        }
+        throw new Exception("Undefined intervale");
+    }
+
+    public function getClassementProduitVente($pointDeVenteId)
+    {
+        $sql = "select produit.id,sum(quantite) as total_ventes from vente_detail join produit on produit_id=produit.id where produit.point_de_vente_id=" . $pointDeVenteId . " group by produit_id order by total_ventes desc limit 30";
+        $results = $this->em->getConnection()->fetchAllAssociative($sql);
+        $produitRepository = $this->em->getRepository(Produit::class);
+
+        $retour = [];
+        foreach ($results as $row) {
+            $produit = $produitRepository->find($row["id"]);
+            $normalized = $this->serializer->normalize($produit, null, ["groups" => ['produit:collection', 'categorie:collection', 'quantification:collection']]);
+            $normalized["total_ventes"] = $row["total_ventes"];
+            array_push($retour, $normalized);
+        }
+
+        return $retour;
     }
 
     public function getPrixTotalVentes($id)
@@ -77,6 +174,27 @@ class ProduitService
         $this->stockService = $service;
     }
 
+    public function deleteUnusedCategory()
+    {
+        $sql = "delete from
+        categorie
+            where
+                id in (
+                    select
+                        categorie.id
+                    from
+                        categorie
+                        left join produit_categorie on categorie_id = categorie.id
+                    group by
+                        categorie.id
+                    having
+                        count(categorie_id) = 0
+            
+            )";
+
+        $this->em->getConnection()->executeQuery($sql);
+    }
+
     public function getPrix($id)
     {
         $produit = $this->em->getRepository(Produit::class)->find($id);
@@ -91,8 +209,9 @@ class ProduitService
         $repport = $this->stockService->getDernierRepportProduit($id, $pointDeVente->getId());
         $dateDebut = null;
 
-        $retour = $repport->getPrixUnit();
+
         if ($repport) {
+            $retour = $repport->getPrixUnit();
             $dateDebut = $repport->getDaty();
             $nbVentes = $this->approvisionnementService->getQuantiteVenteProduit($id, $dateDebut);
             if ($nbVentes > $repport->getQuantite()) {

@@ -25,12 +25,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
     new GetCollection(normalizationContext: ['groups' => ['approvisionnement:collection', 'fournisseur:collection']]),
     new Post(denormalizationContext: ['groups' => ['approvisionnementDetail:collection', 'approvisionnement:post', 'fournisseur:collection', 'pointDeVente:collection']]),
     new Get(normalizationContext: ['groups' => ['approvisionnementDetail:collection', 'produit:collection', 'quantification:collection', 'approvisionnement:collection', 'approvisionnement:post', 'fournisseur:collection', 'pointDeVente:collection']]),
-    new Put(),
+    new Put(denormalizationContext: ['groups' => ['approvisionnementDetail:collection', 'approvisionnement:post', 'fournisseur:collection', 'pointDeVente:collection']]),
     new Patch(),
     new Delete(),
 ],)]
 #[ApiFilter(DateFilter::class, properties: ['dateAchat'])]
-#[ApiFilter(SearchFilter::class, properties: ['fournisseur.nom' => 'partial', 'fournisseur.id' => 'exact'])]
+#[ApiFilter(SearchFilter::class, properties: ['fournisseur.nom' => 'partial', 'fournisseur.id' => 'exact', 'pointDeVente.id' => 'exact'])]
 #[ApiFilter(OrderFilter::class, properties: ['dateAchat', 'daty', 'fournisseur.nom', 'prixTotal', 'numFacture'], arguments: ['orderParameterName' => 'order'])]
 class Approvisionnement
 {

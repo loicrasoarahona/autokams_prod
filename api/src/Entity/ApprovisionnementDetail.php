@@ -22,7 +22,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: ApprovisionnementDetailRepository::class)]
 #[ApiResource(operations: [
     new GetCollection(normalizationContext: ['groups' => ['approvisionnementDetail:collection', 'approvisionnement:collection', 'quantification:collection', 'fournisseur:collection']]),
-    new Post(),
+    new Post(
+        denormalizationContext: ['groups' => ['approvisionnementDetail:collection']],
+        normalizationContext: ["groups" => ['approvisionnementDetail:collection', 'approvisionnement:collection', 'quantification:collection', 'fournisseur:collection']]
+    ),
     new Get(normalizationContext: ["groups" => ['approvisionnementDetail:collection', 'approvisionnement:collection', 'quantification:collection', 'stockVente', 'produit:collection']]),
     new Put(
         denormalizationContext: ["groups" => ['approvisionnementDetail:collection', 'approvisionnement:collection']],

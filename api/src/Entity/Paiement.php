@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
@@ -20,14 +21,15 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: PaiementRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(operations: [
-    new GetCollection(normalizationContext: ['groups' => ["paiement:collection", "vente:post"]]),
+    new GetCollection(normalizationContext: ['groups' => ["paiement:collection", "vente:post", "client:collection"]]),
     new Post(),
     new Get(),
     new Put(),
     new Patch(),
     new Delete(),
 ],)]
-#[ApiFilter(SearchFilter::class, properties: ['vente.id' => 'exact'])]
+#[ApiFilter(OrderFilter::class, properties: ['date'], arguments: ['orderParameterName' => 'order'])]
+#[ApiFilter(SearchFilter::class, properties: ['vente.id' => 'exact', 'vente.client.nom' => 'partial', 'vente.pointDeVente.id' => "exact"])]
 class Paiement
 {
     #[Groups(["paiement:collection"])]

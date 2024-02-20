@@ -40,7 +40,20 @@ class ProduitController extends AbstractController
     ) {
     }
 
-
+    #[Route('/produits/statistiqueVente', methods: ['GET'])]
+    public function statistiqueVente(Request $req)
+    {
+        try {
+            $produitId = $req->query->get('produitId');
+            $intervale = $req->query->get('intervale');
+            $dateDebut = $req->query->get('dateDebut');
+            $dateFin = $req->query->get('dateFin');
+            $retour = $this->produitService->getStatistiqueVente($produitId, $intervale, $dateDebut, $dateFin);
+            return new JsonResponse($retour);
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage());
+        }
+    }
 
     #[Route('/produits/prixTotalVentes/{id}', methods: ['GET'])]
     public function prixTotalVentes($id)
@@ -54,9 +67,19 @@ class ProduitController extends AbstractController
     }
 
     #[Route('/produits/classement', methods: ['GET'])]
-    public function classementProduit()
+    public function classementProduit(Request $req)
     {
-        $this->produitService->getClassementProduitVente();
+        try {
+            $pointDeVenteId = 0;
+            $pointDeVenteId = $req->query->get('pointDeVenteId');
+            if (!$pointDeVenteId) {
+                throw new Exception("Undefined pointDeVenteId");
+            }
+            $retour = $this->produitService->getClassementProduitVente($pointDeVenteId);
+            return new JsonResponse($retour);
+        } catch (\Throwable $th) {
+            return new JsonResponse($th->getMessage(), 500);
+        }
     }
 
     #[Route('/produits/prix/{id}', methods: ['GET'])]
@@ -447,6 +470,11 @@ class ProduitController extends AbstractController
     #[Route('/produits/addCategorie/{produitId}', methods: ['POST'])]
     public function ajouterProduitCategorie($produitId, Request $request)
     {
+        // supprimer les catégories délaissées
+        try {
+            $this->produitService->deleteUnusedCategory();
+        } catch (\Throwable $th) {
+        }
         try {
             $body = $request->getContent();
             $categorie = $this->serializer->deserialize($body, Categorie::class, "json");

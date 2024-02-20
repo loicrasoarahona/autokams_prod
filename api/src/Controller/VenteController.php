@@ -4,12 +4,14 @@ namespace App\Controller;
 
 use App\Entity\NotificationRecouvrement;
 use App\Entity\Paiement;
+use App\Entity\Utilisateur;
 use App\Entity\Vente;
 use App\Service\VenteService;
 use DateInterval;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,8 +22,12 @@ use Symfony\Component\Serializer\SerializerInterface;
 class VenteController extends AbstractController
 {
 
-    public function __construct(private VenteService $venteService, private SerializerInterface $serializer, private EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private VenteService $venteService,
+        private SerializerInterface $serializer,
+        private EntityManagerInterface $entityManager,
+        private Security $security
+    ) {
     }
 
     #[Route('/ventes/deletePaiements/{venteId}', methods: ['DELETE'])]
@@ -122,6 +128,16 @@ class VenteController extends AbstractController
     #[Route('/ventes', methods: ['GET'])]
     public function getVentes(Request $request)
     {
+        $user = $this->security->getUser();
+        if (!$user) {
+            return new JsonResponse("Utilisateur inconnu", 500);
+        }
+        $utilisateur = $this->entityManager->getRepository(Utilisateur::class)->find($user->getId());
+        $pointDeVente = $utilisateur->getPointDeVente();
+        if (!$pointDeVente) {
+            return new JsonResponse("Point de vente indéfini", 500);
+        }
+
         $numFacture = $request->query->get("numFacture");
         $client = $request->query->get("client");
         $dateDebut = $request->query->get("dateDebut");
@@ -134,6 +150,9 @@ class VenteController extends AbstractController
         $queryBuilder = $this->entityManager->getRepository(Vente::class)->createQueryBuilder('vente');
 
         $queryBuilder->where("1<2");
+        $queryBuilder->join('vente.pointDeVente', 'pointDeVente');
+        $queryBuilder->andWhere('pointDeVente.id=:pointDeVenteId');
+        $queryBuilder->setParameter('pointDeVenteId', $pointDeVente->getId());
 
         if (!empty($numFacture)) {
             $queryBuilder->andWhere("vente.numFacture like :numFacture");

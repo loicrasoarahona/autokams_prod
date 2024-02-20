@@ -33,7 +33,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
         new GetCollection(normalizationContext: ["groups" => ["vente:post", "client:collection"]]),
         new Post(
             denormalizationContext: ['groups' => ["vente:post", "client:collection", "venteDetail:collection", "approvisionnementDetail:collection", "paiement:collection"]],
-            normalizationContext: ['groups' => ["vente:post", "client:collection", "venteDetail:collection", "produit:collection", "quantification:collection", "approvisionnementDetail:collection"]]
+            normalizationContext: ['groups' => ["vente:post", "client:collection", "venteDetail:collection", "produit:collection", "quantification:collection"]]
         ),
         new Get(normalizationContext: ['groups' => ["vente:post", "client:collection", "venteDetail:collection", "venteLivraison:collection"]]),
         new Put(denormalizationContext: ['groups' => ["vente:post", "client:collection", "venteDetail:collection", "venteLivraison:collection"]], normalizationContext: ['groups' => ["vente:post", "client:collection", "venteDetail:collection"]]),

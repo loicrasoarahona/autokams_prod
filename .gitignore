@@ -1,2 +1,5 @@
 assets
 api/public/uploads
+api/public/bundles
+api/vendor
+api/var

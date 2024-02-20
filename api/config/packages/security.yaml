@@ -30,6 +30,11 @@ security:
             stateless: true
             provider: users
             jwt: ~
+        ventes:
+            pattern: ^/ventes
+            stateless: true
+            provider: users
+            jwt: ~
         authenticated :
             pattern: ^/user_info
             security: true
@@ -71,4 +76,5 @@ security:
         - { path: ^/api, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: PUBLIC_ACCESS } # Temporaire
         - { path: ^/produits, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/ventes, roles: IS_AUTHENTICATED_FULLY }
         # - { path: ^/, roles: IS_AUTHENTICATED_FULLY }

@@ -33,7 +33,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
     new Patch(),
     new Delete(),
 ],)]
-#[ApiFilter(SearchFilter::class, properties: ['nom' => 'partial', 'categorie.id' => 'exact'])]
+#[ApiFilter(SearchFilter::class, properties: ['nom' => 'partial', 'categorie.id' => 'exact', 'pointDeVente.id' => "exact"])]
 #[ApiFilter(OrderFilter::class, properties: ['nom'], arguments: ['orderParameterName' => 'order'])]
 // #[UniqueEntity(fields: ['categorie', 'id'], message: 'Ce numéro existe déjà')]
 class Produit
